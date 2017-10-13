@@ -1,1 +1,1 @@
-web: python echobot.py
+web: python sataakobot.py
