@@ -1,6 +1,5 @@
 import logging
 import telegram
-import enum
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -13,10 +12,6 @@ dispatcher = updater.dispatcher
 
 location_keyboard = telegram.KeyboardButton(text="Send location", request_location=True)
 reply_kb_markup = telegram.ReplyKeyboardMarkup([[location_keyboard]])
-
-
-class States(enum.Enum):
-    QUERIED, LOCATION = range(2)
 
 
 def start(bot, update):
