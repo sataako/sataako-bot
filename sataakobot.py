@@ -21,7 +21,7 @@ def start(bot, update):
 
 
 def echo(bot, update):
-    bot.send_message(chat_id=update.message.chat_id, text="Sorry, we have no yet implemented any functionality. ")
+    bot.send_message(chat_id=update.message.chat_id, text="Sorry, the application is not yet ready. Shoo! ")
 
 
 def unknown(bot, update):
