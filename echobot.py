@@ -1,17 +1,19 @@
 import logging
-import telegram
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters
+import os
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 
-TOKEN = """463554964:AAG7XBJSQU4-KHKpMpQUBIEgQSsRq3mYFy8"""
 
-updater = Updater(token=TOKEN)
+TELEGRAM_API_KEY = os.environ.get('TELEGRAM_API_KEY')
+
+if not TELEGRAM_API_KEY:
+    raise EnvironmentError('You must set a Telegram API key environment variable. ')
+
+
+updater = Updater(token=TELEGRAM_API_KEY)
 dispatcher = updater.dispatcher
-
-location_keyboard = telegram.KeyboardButton(text="Send location", request_location=True)
-reply_kb_markup = telegram.ReplyKeyboardMarkup([[location_keyboard]])
 
 
 def start(bot, update):
@@ -19,7 +21,7 @@ def start(bot, update):
 
 
 def echo(bot, update):
-    bot.send_message(chat_id=update.message.chat_id, text=update.message.text)
+    bot.send_message(chat_id=update.message.chat_id, text="Sorry, we have no yet implemented any functionality. ")
 
 
 def unknown(bot, update):
