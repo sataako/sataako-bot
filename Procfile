@@ -1,1 +1,1 @@
-worker: python sataakobot.py
+web: python sataakobot.py
