@@ -50,6 +50,7 @@ dispatcher.add_handler(unknown_handler)
 
 def start_heroku_webhook():
     """ Starts the bot on Heroku using a webhook. """
+    global TELEGRAM_API_TOKEN
     heroku_url = os.environ.get('SERVER_URL_HEROKU')
     port = int(os.environ.get('PORT', '5000'))
     updater.start_webhook(listen="0.0.0.0",
