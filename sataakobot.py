@@ -18,8 +18,6 @@ parser.set_defaults(deploy_local=False)
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
 
 if not TELEGRAM_API_TOKEN:
-    for key in os.environ:
-        print(key)
     raise EnvironmentError('You must set a Telegram API token key environment variable. ')
 
 
