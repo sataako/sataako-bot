@@ -9,11 +9,11 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger('sataakobot')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--deploy-to-heroku',
-                    dest='deploy_to_heroku',
+parser.add_argument('--deploy-local',
+                    dest='deploy_local',
                     action='store_true',
-                    help='Add this argument to deploy the bot on Heroku. ')
-parser.set_defaults(deploy_to_heroku=False)
+                    help='Add this argument to deploy the bot locally using polling. . ')
+parser.set_defaults(deploy_local=False)
 
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
 
@@ -68,9 +68,9 @@ def start_local_polling():
 
 if __name__ == '__main__':
     args = parser.parse_args()
-    if args.deploy_to_heroku:
-        logger.info('Running bot in Heroku using a webhook. ')
-        start_heroku_webhook()
-    else:
+    if args.deploy_local:
         logger.info('Running bot locally using polling. ')
         start_local_polling()
+    else:
+        logger.info('Running bot in Heroku using a webhook. ')
+        start_heroku_webhook()
