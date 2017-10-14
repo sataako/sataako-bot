@@ -1,1 +1,1 @@
-web: python sataakobot.py --deploy-to-heroku
+web: python sataakobot.py
