@@ -17,7 +17,7 @@ Clone this repository, navigate to it on the command line and run the command be
 ```
 pipenv install
 ```
-### Setting environment and configuration variables. 
+### Setting environment and configuration variables
 
 You have to set specific configuration variables that the app will use. 
 
