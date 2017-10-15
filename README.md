@@ -18,15 +18,21 @@ Clone this repository, navigate to it on the command line and run the command be
 pipenv install
 ```
 
-After this add the required API keys for Telegram and the service to your environment variables.  
+After installing the application you have to set the configuration variables in the `.env.example` file. Once you have configured the variables, rename the file to `.env` - note that only some of the variables are required for local deployment. 
 
-### Deployment
+### Local deployment
 
-Once you have everything installed, you can start the bot by running the command below from the virtual environment. 
+Once you have everything installed and the Telegram API token set in the `.env` file, you can start running the bot on your local machine. 
+
+Navigate to the directory on your command line and open the virtual environment shell. From that shell run command below. 
 
 ```
-python sataakobot.py
+python sataakobot.py --deploy-local
 ```
+
+### Heroku deployment
+
+In order to deploy the bot to Heroku you have to also add the name of your Heroku application in the `.env` file. After this you should be able to deploy the bot by pushing the repository to the Heroku remote. 
 
 
 ## Built with 
