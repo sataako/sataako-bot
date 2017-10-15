@@ -42,29 +42,17 @@ dispatcher.add_handler(echo_handler)
 dispatcher.add_handler(unknown_handler)
 
 
-def start_heroku_webhook():
-    """ Starts the bot on Heroku using a webhook. """
-    global TELEGRAM_API_TOKEN, updater
-    heroku_app_name = os.environ.get('HEROKU_APP_NAME')
-    port = int(os.environ.get('PORT', '5000'))
-    updater.start_webhook(listen="0.0.0.0",
-                          port=port,
-                          url_path=TELEGRAM_API_TOKEN)
-    updater.bot.set_webhook("https://{}.herokuapp.com/{}".format(heroku_app_name, TELEGRAM_API_TOKEN))
-    updater.idle()
-
-
-def start_local_polling():
-    """ Starts the bot locally by using polling. """
-    updater.start_polling()
-    updater.idle()
-
-
 if __name__ == '__main__':
     args = parser.parse_args()
     if args.deploy_local:
         logger.info('Running bot locally using polling. ')
-        start_local_polling()
+        updater.start_polling()
     else:
         logger.info('Running bot in Heroku using a webhook. ')
-        start_heroku_webhook()
+        heroku_app_name = os.environ.get('APP_NAME_HEROKU')
+        port = int(os.environ.get('PORT', '5000'))
+        updater.start_webhook(listen="0.0.0.0",
+                              port=port,
+                              url_path=TELEGRAM_API_TOKEN)
+        updater.bot.set_webhook("https://{}.herokuapp.com/{}".format(heroku_app_name, TELEGRAM_API_TOKEN))
+    updater.idle()
