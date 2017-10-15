@@ -12,7 +12,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--deploy-local',
                     dest='deploy_local',
                     action='store_true',
-                    help='Add this argument to deploy the bot locally using polling. . ')
+                    help='Add this argument to deploy the bot locally using polling.')
 parser.set_defaults(deploy_local=False)
 
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
