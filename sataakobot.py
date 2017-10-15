@@ -17,10 +17,6 @@ parser.set_defaults(deploy_local=False)
 
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
 
-if not TELEGRAM_API_TOKEN:
-    raise EnvironmentError('You must set a Telegram API token key environment variable. ')
-
-
 updater = Updater(token=TELEGRAM_API_TOKEN)
 dispatcher = updater.dispatcher
 
@@ -49,12 +45,12 @@ dispatcher.add_handler(unknown_handler)
 def start_heroku_webhook():
     """ Starts the bot on Heroku using a webhook. """
     global TELEGRAM_API_TOKEN, updater
-    heroku_url = os.environ.get('SERVER_URL_HEROKU')
+    heroku_app_name = os.environ.get('HEROKU_APP_NAME')
     port = int(os.environ.get('PORT', '5000'))
     updater.start_webhook(listen="0.0.0.0",
                           port=port,
                           url_path=TELEGRAM_API_TOKEN)
-    updater.bot.set_webhook(heroku_url + TELEGRAM_API_TOKEN)
+    updater.bot.set_webhook("https://{}.herokuapp.com/{}".format(heroku_app_name, TELEGRAM_API_TOKEN))
     updater.idle()
 
 
