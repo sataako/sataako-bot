@@ -5,14 +5,14 @@
         },
         "host-environment-markers": {
             "implementation_name": "cpython",
-            "implementation_version": "3.6.1",
+            "implementation_version": "3.6.2",
             "os_name": "posix",
             "platform_machine": "x86_64",
             "platform_python_implementation": "CPython",
             "platform_release": "17.0.0",
             "platform_system": "Darwin",
             "platform_version": "Darwin Kernel Version 17.0.0: Thu Aug 24 21:48:19 PDT 2017; root:xnu-4570.1.46~2/RELEASE_X86_64",
-            "python_full_version": "3.6.1",
+            "python_full_version": "3.6.2",
             "python_version": "3.6",
             "sys_platform": "darwin"
         },
@@ -42,10 +42,10 @@
         },
         "python-telegram-bot": {
             "hashes": [
-                "sha256:a4ca3ffc25e68bb8484be182abf568eb9b6696681661c953d0fde65b3378b142",
-                "sha256:b648845f9d5c3ed569066be25e5efdfa36148a24d87e7b5219b4eb8e64853b4d"
+                "sha256:997983e5082dc6aa811bce3a6014731201fc64b0a9c02fdb26beac686029d94b",
+                "sha256:238c4a88b09d93c52d413bcf7e7fe14dfeb02f5f9222ffe4cafd4bd3d55489a3"
             ],
-            "version": "==8.0"
+            "version": "==8.1.1"
         }
     },
     "develop": {}
