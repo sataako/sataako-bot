@@ -21,7 +21,6 @@ parser.set_defaults(deploy_local=False)
 
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
 RAIN_WARNING_QUERY_INTERVAL = int(os.environ.get('RAIN_WARNING_QUERY_INTERVAL', 120))
-CAT_GIF_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
 
 SHOW_MAP = "Show rain map"
 UPDATE_LOCATION = "Update location"

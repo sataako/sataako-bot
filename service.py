@@ -9,6 +9,7 @@ logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s
 logger = logging.getLogger(__name__)
 
 SATAAKO_SERVER_URL = os.environ['SATAAKO_SERVER_URL']
+CAT_GIF_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
 
 
 def when_will_it_rain(location):
@@ -29,7 +30,7 @@ def get_rain_map():
     logger.info("Calling the service for a new rain map. ")
     try:
         logger.info("Attempting rain map request to service. ")
-        response = requests.get("http://thecatapi.com/api/images/get?format=src&type=gif")
+        response = requests.get(CAT_GIF_API_URL)
         message = "Sorry, we couldn't fetch the rain map but here's a picture of a cat instead! "
         image_url = response.url
     except ConnectionError:
