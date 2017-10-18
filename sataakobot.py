@@ -108,7 +108,8 @@ def show_rain_map(bot, update):
     update.message.reply_text(text="Hold on tight, we're fetching the rain map. ")
     image_url, message = service.get_rain_map()
     bot.send_message(chat_id=chat_id, text=message)
-    bot.send_photo(chat_id=chat_id, photo=image_url)
+    if image_url:
+        bot.send_photo(chat_id=chat_id, photo=image_url)
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
