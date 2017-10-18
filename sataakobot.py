@@ -5,7 +5,6 @@ import os
 import argparse
 import enum
 
-
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -18,17 +17,18 @@ parser.add_argument('--deploy-local',
 parser.set_defaults(deploy_local=False)
 
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
+WARNING_INTERVAL = 15
 
 SHOW_MAP = "Show rain map"
 UPDATE_LOCATION = "Update location"
-SIGN_OUT = "Sign out"
+EXIT_APP = "Exit application"
 
 
 class AppStates(enum.IntEnum):
     """ Enums for the different states of the application. """
     UPDATE_LOCATION = 0
     HANDLE_USER_ACTION = 1
-    SIGN_OUT = 2
+    EXIT_APP = 2
 
 
 def start(bot, update):
@@ -44,7 +44,7 @@ def show_actions_menu(bot, chat_id):
     keyboard = [
         [KeyboardButton(SHOW_MAP)],
         [KeyboardButton(UPDATE_LOCATION, request_location=True)],
-        [KeyboardButton(SIGN_OUT)]
+        [KeyboardButton(EXIT_APP)]
     ]
     bot.send_message(
         text="Choose your next action. ",
@@ -53,26 +53,61 @@ def show_actions_menu(bot, chat_id):
     )
 
 
-def update_location(bot, update):
+def callback_rain_warning_to_user(bot, job):
+    """ Callback job function for warning the user about rainfall. """
+    chat_id = job.context['chat_id']
+    location = job.context['location']
+    message = "It might rain at your location %s" % str(location)
+    bot.send_message(chat_id=chat_id, text=message)
+
+
+def schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval):
+    """ Schedules a repeating rain warning job and adds a reference to the job in the user_data dictionary. """
+    logger.info("Scheduling a new rain warning job for chat with id %s." % chat_id)
+    context = {'location': location, 'chat_id': chat_id}
+    rain_warning_job = job_queue.run_repeating(callback_rain_warning_to_user, interval=interval, context=context)
+    user_data['job'] = rain_warning_job
+
+
+def remove_rain_warning_job(user_data):
+    """ Schedules the removal of the rain warning job from the user dictionary. """
+    logger.info('Removing rain warning job from chat. ')
+    if 'job' in user_data:
+        logger.info('Job found in user_data, scheduling its removal. ')
+        job = user_data['job']
+        job.schedule_removal()
+    else:
+        logger.info('No existing job found in user_data. ')
+
+
+def update_location(bot, update, job_queue, user_data):
+    """ Updates the location of the user and adds a repeating job of warning the user of rainfall. """
+    global WARNING_INTERVAL
     logger.info("Updating location for chat with id %s" % update.message.chat.id)
+    location = update.message.location
+    chat_id = update.message.chat_id
+    remove_rain_warning_job(user_data)
+    schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval=WARNING_INTERVAL)
     bot.send_message(text="Your location has been updated!", chat_id=update.message.chat_id)
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
 
 def show_rain_map(bot, update):
+    """ Displays a rainfall map in the chat. """
     logger.info("Getting rain map for chat with id %s. " % update.message.chat.id)
     bot.send_message(text="Here is your rain map! ", chat_id=update.message.chat_id)
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
 
-def sign_out(bot, update):
-    user = update.message.from_user
-    logger.info("User %s canceled the conversation. " % user.first_name)
+def exit_application(bot, update, user_data):
+    """ Exits the conversation with the application and schedules a removal of the warning job. """
+    logger.info("Chat with id %s exited the application. " % update.message.chat.id)
+    remove_rain_warning_job(user_data)
+    user_data.clear()
     update.message.reply_text('Hope you enjoyed the service. Bye!',
                               reply_markup=ReplyKeyboardRemove())
-    logger.info("Signing user out of application. ")
     return ConversationHandler.END
 
 
@@ -86,16 +121,18 @@ def create_bot_updater():
 
     start_handler = CommandHandler('start', start)
     unknown_handler = MessageHandler(Filters.command, unknown)
-    sign_out_handler = CommandHandler('sign_out', sign_out)
+    sign_out_handler = CommandHandler('sign_out', exit_application)
 
     app_handler = ConversationHandler(
         entry_points=[start_handler],
         states={
-            AppStates.UPDATE_LOCATION: [MessageHandler(Filters.location, update_location)],
+            AppStates.UPDATE_LOCATION: [
+                MessageHandler(Filters.location, update_location, pass_job_queue=True, pass_user_data=True)
+            ],
             AppStates.HANDLE_USER_ACTION: [
                 RegexHandler(SHOW_MAP, show_rain_map),
-                MessageHandler(Filters.location, update_location),
-                RegexHandler(SIGN_OUT, sign_out)
+                MessageHandler(Filters.location, update_location, pass_job_queue=True, pass_user_data=True),
+                RegexHandler(EXIT_APP, exit_application, pass_user_data=True)
             ]
         },
         fallbacks=[sign_out_handler]
