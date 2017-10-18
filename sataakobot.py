@@ -20,8 +20,8 @@ parser.add_argument('--deploy-local',
 parser.set_defaults(deploy_local=False)
 
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
-CAT_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
-WARNING_INTERVAL = 15
+RAIN_WARNING_QUERY_INTERVAL = int(os.environ.get('RAIN_WARNING_QUERY_INTERVAL', 120))
+CAT_GIF_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
 
 SHOW_MAP = "Show rain map"
 UPDATE_LOCATION = "Update location"
@@ -67,8 +67,11 @@ def callback_rain_warning_to_user(bot, job):
     chat_id = job.context['chat_id']
     location = job.context['location']
     logger.info("Handling rain warning job for chat with id %s. " % chat_id)
-    message = "It might rain at your location %s" % str(location)
-    bot.send_message(chat_id=chat_id, text=message)
+    rainfall = service.when_will_it_rain(location)
+    if rainfall:
+        message = "Warning! It will rain at the location above at %s. " % rainfall
+        bot.send_location(location=location)
+        bot.send_message(chat_id=chat_id, text=message)
 
 
 def schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval):
@@ -92,12 +95,12 @@ def remove_rain_warning_job(user_data):
 
 def update_location(bot, update, job_queue, user_data):
     """ Updates the location of the user and adds a repeating job of warning the user of rainfall. """
-    global WARNING_INTERVAL
+    global RAIN_WARNING_QUERY_INTERVAL
     logger.info("Updating location for chat with id %s" % update.message.chat.id)
     location = update.message.location
     chat_id = update.message.chat_id
     remove_rain_warning_job(user_data)
-    schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval=WARNING_INTERVAL)
+    schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval=RAIN_WARNING_QUERY_INTERVAL)
     update.message.reply_text(text="Your location has been updated!")
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
