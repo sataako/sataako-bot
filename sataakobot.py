@@ -32,6 +32,7 @@ class AppStates(enum.IntEnum):
 
 
 def start(bot, update):
+    """ Starts the conversation with a new user and displays a keyboard that requests the location of the user. """
     logger.info("Starting new conversation with chat id %s. " % update.message.chat_id)
     keyboard = [[KeyboardButton("Click here to get started", request_location=True)]]
     update.message.reply_text(
@@ -42,6 +43,7 @@ def start(bot, update):
 
 
 def show_actions_menu(bot, chat_id):
+    """ Displays an actions menu keyboard to the user in the chat. """
     keyboard = [
         [KeyboardButton(SHOW_MAP)],
         [KeyboardButton(UPDATE_LOCATION, request_location=True)],
@@ -113,10 +115,12 @@ def exit_application(bot, update, user_data):
 
 
 def unknown(bot, update):
+    """ Function for handling unknown commands in the chat. """
     bot.send_message(chat_id=update.message.chat_id, text="Sorry, I didn't understand that command.")
 
 
 def create_bot_updater():
+    """ Creates and returns new Updater object for the bot. """
     bot_updater = Updater(token=TELEGRAM_API_TOKEN)
     dispatcher = bot_updater.dispatcher
 
@@ -145,6 +149,7 @@ def create_bot_updater():
 
 
 def start_bot(bot_updater, run_local):
+    """ Starts the given bot Updater either locally using polling or in Heroku using a webhook. """
     if run_local:
         logger.info('Running bot locally using polling. ')
         bot_updater.start_polling()
