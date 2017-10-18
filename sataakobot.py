@@ -32,6 +32,7 @@ class AppStates(enum.IntEnum):
 
 
 def start(bot, update):
+    logger.info("Starting new conversation with chat id %s. " % update.message.chat_id)
     keyboard = [[KeyboardButton("Click here to get started", request_location=True)]]
     update.message.reply_text(
         'Hey there and welcome to the Sataako -service! ',
@@ -88,7 +89,7 @@ def update_location(bot, update, job_queue, user_data):
     chat_id = update.message.chat_id
     remove_rain_warning_job(user_data)
     schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval=WARNING_INTERVAL)
-    bot.send_message(text="Your location has been updated!", chat_id=update.message.chat_id)
+    update.message.reply_text(text="Your location has been updated!", chat_id=update.message.chat_id)
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
