@@ -1,9 +1,12 @@
+""" Main file for starting the bot from the command line. """
+
 import logging
 from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
 import os
 import argparse
 import enum
+import service
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -17,6 +20,7 @@ parser.add_argument('--deploy-local',
 parser.set_defaults(deploy_local=False)
 
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
+CAT_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
 WARNING_INTERVAL = 15
 
 SHOW_MAP = "Show rain map"
@@ -99,8 +103,12 @@ def update_location(bot, update, job_queue, user_data):
 
 def show_rain_map(bot, update):
     """ Displays a rainfall map in the chat. """
+    chat_id = update.message.chat_id
     logger.info("Getting rain map for chat with id %s. " % update.message.chat.id)
-    bot.send_message(text="Here is your rain map! ", chat_id=update.message.chat_id)
+    update.message.reply_text(text="Hold on tight, we're fetching the rain map. ")
+    image_url, message = service.get_rain_map()
+    bot.send_message(chat_id=chat_id, text=message)
+    bot.send_photo(chat_id=chat_id, photo=image_url)
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
