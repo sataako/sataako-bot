@@ -109,7 +109,7 @@ def show_rain_map(bot, update):
     image_url, message = service.get_rain_map()
     bot.send_message(chat_id=chat_id, text=message)
     if image_url:
-        bot.send_photo(chat_id=chat_id, photo=image_url)
+        bot.send_document(chat_id=chat_id, document=image_url)
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 

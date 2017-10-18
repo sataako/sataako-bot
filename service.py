@@ -19,7 +19,7 @@ def get_rain_map():
     logger.info("Calling the service for a new rain map. ")
     try:
         logger.info("Attempting rain map request to service. ")
-        response = requests.get("http://thecatapi.com/api/images/get?format=src&type=png")
+        response = requests.get("http://thecatapi.com/api/images/get?format=src&type=gif")
         message = "Sorry, we couldn't fetch the rain map but here's a picture of a cat instead! "
         image_url = response.url
     except ConnectionError:
