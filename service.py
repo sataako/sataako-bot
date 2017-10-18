@@ -2,16 +2,26 @@
 
 import requests
 import logging
-
+import os
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+SATAAKO_SERVER_URL = os.environ['SATAAKO_SERVER_URL']
+
 
 def when_will_it_rain(location):
     """ Queries the service for the next moment of rainfall with the given location. """
-    raise NotImplementedError
+    longitude, latitude = location['longitude'], location['latitude']
+    query = "{}/rains/{}/{}".format(SATAAKO_SERVER_URL, longitude, latitude)
+    try:
+        logger.info("Making query to URL %s for rainfall. " % query)
+        response = requests.get(query)
+        return response.json()
+    except ConnectionError:
+        logger.info("Rainfall query to URL %s failed, returning None. " % query)
+        return []
 
 
 def get_rain_map():
