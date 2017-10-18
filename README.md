@@ -23,6 +23,8 @@ You have to set specific configuration variables that the app will use.
 
 * `TELEGRAM_API_TOKEN` - The Telegram API token for your bot.
 * `APP_NAME_HEROKU` - The name of your Heroku app; only required if you are deploying the bot to Heroku.
+* `SATAAKO_SERVER_URL` - The url of the Sataako backend server with no "/" at the end. 
+* `RAIN_WARNING_QUERY_INTERVAL` - The length of the interval for making queries to the server about rainfall at a location. 
 
 ### Local deployment
 
