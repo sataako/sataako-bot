@@ -44,6 +44,7 @@ def start(bot, update):
 
 def show_actions_menu(bot, chat_id):
     """ Displays an actions menu keyboard to the user in the chat. """
+    logger.info("Displaying the actions menu in the chat with id %s. " % chat_id)
     keyboard = [
         [KeyboardButton(SHOW_MAP)],
         [KeyboardButton(UPDATE_LOCATION, request_location=True)],
@@ -91,7 +92,7 @@ def update_location(bot, update, job_queue, user_data):
     chat_id = update.message.chat_id
     remove_rain_warning_job(user_data)
     schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval=WARNING_INTERVAL)
-    update.message.reply_text(text="Your location has been updated!", chat_id=update.message.chat_id)
+    update.message.reply_text(text="Your location has been updated!")
     show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
