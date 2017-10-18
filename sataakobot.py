@@ -1,7 +1,7 @@
 """ Main file for starting the bot from the command line. """
 
 import logging
-from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton
+from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, ChatAction
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
 import os
 import argparse
@@ -26,6 +26,7 @@ WARNING_INTERVAL = 15
 SHOW_MAP = "Show rain map"
 UPDATE_LOCATION = "Update location"
 EXIT_APP = "Exit application"
+START_APP = "Start application"
 
 
 class AppStates(enum.IntEnum):
@@ -65,6 +66,7 @@ def callback_rain_warning_to_user(bot, job):
     """ Callback job function for warning the user about rainfall. """
     chat_id = job.context['chat_id']
     location = job.context['location']
+    logger.info("Handling rain warning job for chat with id %s. " % chat_id)
     message = "It might rain at your location %s" % str(location)
     bot.send_message(chat_id=chat_id, text=message)
 
@@ -106,6 +108,7 @@ def show_rain_map(bot, update):
     chat_id = update.message.chat_id
     logger.info("Getting rain map for chat with id %s. " % update.message.chat.id)
     update.message.reply_text(text="Hold on tight, we're fetching the rain map. ")
+    bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
     image_url, message = service.get_rain_map()
     bot.send_message(chat_id=chat_id, text=message)
     if image_url:
@@ -119,8 +122,12 @@ def exit_application(bot, update, user_data):
     logger.info("Chat with id %s exited the application. " % update.message.chat.id)
     remove_rain_warning_job(user_data)
     user_data.clear()
-    update.message.reply_text('Hope you enjoyed the service. Bye!',
-                              reply_markup=ReplyKeyboardRemove())
+    keyboard = [[KeyboardButton(START_APP)]]
+    update.message.reply_text(
+        'Hope you enjoyed the service. '
+        'Click the button below to start using the application again. Bye!',
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
     return ConversationHandler.END
 
 
@@ -139,7 +146,10 @@ def create_bot_updater():
     sign_out_handler = CommandHandler('sign_out', exit_application)
 
     app_handler = ConversationHandler(
-        entry_points=[start_handler],
+        entry_points=[
+            start_handler,
+            RegexHandler(START_APP, start)
+        ],
         states={
             AppStates.UPDATE_LOCATION: [
                 MessageHandler(Filters.location, update_location, pass_job_queue=True, pass_user_data=True)
