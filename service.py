@@ -12,7 +12,7 @@ SATAAKO_SERVER_URL = os.environ['SATAAKO_SERVER_URL']
 CAT_GIF_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
 
 
-def when_will_it_rain(location):
+def get_forecast_json(location):
     """ Queries the service for the next moment of rainfall with the given location. """
     longitude, latitude = location['longitude'], location['latitude']
     query = "{}/forecast/{}/{}".format(SATAAKO_SERVER_URL, longitude, latitude)
