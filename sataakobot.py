@@ -61,14 +61,34 @@ def show_actions_menu(bot, chat_id):
     )
 
 
+def parse_forecast_json(forecast_json):
+    """ Parses the forecast JSON and returns a Boolean and a message about rainfall. """
+    forecasts = forecast_json.get('forecasts')
+    warning = False
+    intensity = 0
+    rainfall_eta = None
+    for forecast in forecasts:
+        rain_intensity = forecast.get('rain_intensity')
+        if rain_intensity > 0:
+            intensity = rain_intensity
+            rainfall_eta = forecast.get('time')
+            warning = True
+            break
+    return warning, intensity, rainfall_eta
+
+
 def callback_rain_warning_to_user(bot, job):
     """ Callback job function for warning the user about rainfall. """
     chat_id = job.context['chat_id']
     location = job.context['location']
     logger.info("Handling rain warning job for chat with id %s. " % chat_id)
-    rainfall = service.when_will_it_rain(location)
-    if rainfall:
-        message = "Warning! It will rain at the location above at %s. " % rainfall
+    forecast = service.get_forecast_json(location)
+    if not forecast:
+        return
+    warning, intensity, rainfall_eta = parse_forecast_json(forecast)
+    if warning:
+        logger.info("Sending warning to chat with id %s. " % chat_id)
+        message = "Warning! Expecting rainfall at %s. Estimated rainfall intensity is %s. " % (rainfall_eta, intensity)
         bot.send_location(chat_id=chat_id, location=location)
         bot.send_message(chat_id=chat_id, text=message)
 
