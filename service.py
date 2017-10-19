@@ -15,7 +15,7 @@ CAT_GIF_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
 def when_will_it_rain(location):
     """ Queries the service for the next moment of rainfall with the given location. """
     longitude, latitude = location['longitude'], location['latitude']
-    query = "{}/rains/{}/{}".format(SATAAKO_SERVER_URL, longitude, latitude)
+    query = "{}/forecast/{}/{}".format(SATAAKO_SERVER_URL, longitude, latitude)
     try:
         logger.info("Making query to URL %s for rainfall. " % query)
         response = requests.get(query)
