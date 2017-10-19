@@ -69,7 +69,7 @@ def callback_rain_warning_to_user(bot, job):
     rainfall = service.when_will_it_rain(location)
     if rainfall:
         message = "Warning! It will rain at the location above at %s. " % rainfall
-        bot.send_location(location=location)
+        bot.send_location(chat_id=chat_id, location=location)
         bot.send_message(chat_id=chat_id, text=message)
 
 
