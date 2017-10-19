@@ -19,7 +19,12 @@ def when_will_it_rain(location):
     try:
         logger.info("Making query to URL %s for rainfall. " % query)
         response = requests.get(query)
-        return response.json()
+        response_code = response.status_code
+        logger.info("Response returned with status code %s. " % response_code)
+        if response_code == requests.codes.ok:
+            return response.json()
+        else:
+            return []
     except ConnectionError:
         logger.info("Rainfall query to URL %s failed, returning None. " % query)
         return []
