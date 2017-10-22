@@ -7,6 +7,8 @@ import os
 import argparse
 import enum
 import service
+import pytz
+import datetime
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -62,35 +64,48 @@ def show_actions_menu(bot, chat_id):
 
 
 def parse_forecast_json(forecast_json):
-    """ Parses the forecast JSON and returns a Boolean and a message about rainfall. """
+    """ Parses the forecast JSON and returns whether it is currently raining,
+    when current state is estimated to end and the expected amount of rain in the next hour. """
     forecasts = forecast_json.get('forecasts')
-    warning = False
-    intensity = 0
-    rainfall_eta = None
+    is_raining = None
+    change_eta = None
+    accumulation = forecast_json.get('accumulation', 0.0)
     for forecast in forecasts:
         rain_intensity = forecast.get('rain_intensity')
-        if rain_intensity > 0:
-            intensity = rain_intensity
-            rainfall_eta = forecast.get('time')
-            warning = True
+        if is_raining is None:
+            is_raining = rain_intensity > 0
+        if is_raining != rain_intensity > 0:
+            change_eta = forecast.get('time')
             break
-    return warning, intensity, rainfall_eta
+    if change_eta is not None:
+        time_format = forecast_json.get('time_format')
+        timezone = forecast_json.get('timezone')
+        dtime = datetime.datetime.strptime(change_eta, time_format)
+        dtime = dtime.replace(tzinfo=pytz.timezone(timezone))
+        dtime = dtime.astimezone(pytz.timezone('Europe/Helsinki'))
+        change_eta = dtime.strftime("%H:%M")
+    return is_raining, change_eta, accumulation
 
 
 def callback_rain_warning_to_user(bot, job):
     """ Callback job function for warning the user about rainfall. """
     chat_id = job.context['chat_id']
     location = job.context['location']
+    warned = job.context.get('warned', False)
     logger.info("Handling rain warning job for chat with id %s. " % chat_id)
     forecast = service.get_forecast_json(location)
     if not forecast:
         return
-    warning, intensity, rainfall_eta = parse_forecast_json(forecast)
-    if warning:
+    is_raining, change_eta, accumulation = parse_forecast_json(forecast)
+    if is_raining is False and change_eta is not None and not warned:
         logger.info("Sending warning to chat with id %s. " % chat_id)
-        message = "Warning! Expecting rainfall at %s. Estimated rainfall intensity is %s. " % (rainfall_eta, intensity)
+        job.context['warned'] = True
+        message = "Warning! Expecting rainfall at %s. Estimated rainfall amount %.2fmm. " % (change_eta, accumulation)
         bot.send_location(chat_id=chat_id, location=location)
         bot.send_message(chat_id=chat_id, text=message)
+    if is_raining is True:
+        logger.info("Setting warned to false to chat with id %s. " % chat_id)
+        job.context['warned'] = False
 
 
 def schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval):
