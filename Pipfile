@@ -9,6 +9,7 @@ name = "pypi"
 
 python-telegram-bot = "*"
 requests = "*"
+pytz = "*"
 
 
 [dev-packages]
