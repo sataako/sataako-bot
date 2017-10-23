@@ -112,7 +112,8 @@ def schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval)
     """ Schedules a repeating rain warning job and adds a reference to the job in the user_data dictionary. """
     logger.info("Scheduling a new rain warning job for chat with id %s." % chat_id)
     context = {'location': location, 'chat_id': chat_id}
-    rain_warning_job = job_queue.run_repeating(callback_rain_warning_to_user, interval=interval, context=context)
+    rain_warning_job = job_queue.run_repeating(callback_rain_warning_to_user, first=0,
+                                               interval=interval, context=context)
     user_data['job'] = rain_warning_job
 
 
