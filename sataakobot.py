@@ -1,7 +1,7 @@
 """ Main file for starting the bot from the command line. """
 
 import logging
-from telegram import ReplyKeyboardRemove, ReplyKeyboardMarkup, KeyboardButton, ChatAction
+from telegram import ReplyKeyboardMarkup, KeyboardButton, ChatAction
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
 import os
 import argparse
@@ -154,17 +154,24 @@ def show_rain_map(bot, update):
     return AppStates.HANDLE_USER_ACTION
 
 
+def show_start_application_keyboard(bot, chat_id):
+    keyboard = [[KeyboardButton(START_APP)]]
+    bot.send_message(
+        chat_id=chat_id,
+        text="Click the button below to start using the application again.",
+        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+    )
+
+
 def exit_application(bot, update, user_data):
     """ Exits the conversation with the application and schedules a removal of the warning job. """
     logger.info("Chat with id %s exited the application. " % update.message.chat.id)
     remove_rain_warning_job(user_data)
     user_data.clear()
-    keyboard = [[KeyboardButton(START_APP)]]
     update.message.reply_text(
-        'Hope you enjoyed the service. '
-        'Click the button below to start using the application again. Bye!',
-        reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
+        'Hope you enjoyed the service, bye! '
     )
+    show_start_application_keyboard(bot, chat_id=update.message.chat_id)
     return ConversationHandler.END
 
 
@@ -173,10 +180,18 @@ def unknown(bot, update):
     bot.send_message(chat_id=update.message.chat_id, text="Sorry, I didn't understand that command.")
 
 
+def message_all_conversations_function(updater, conversation_handler):
+    """ Creates a SIGTERM handler function that messages all conversations. """
+    def sigterm_handler(signal, frame):
+        for key in conversation_handler.conversations:
+            chat_id, __ = key
+            updater.bot.send_message(chat_id=chat_id, text="Sorry, the bot is down for maintenance! ")
+            show_start_application_keyboard(updater.bot, chat_id)
+    return sigterm_handler
+
+
 def create_bot_updater():
     """ Creates and returns new Updater object for the bot. """
-    bot_updater = Updater(token=TELEGRAM_API_TOKEN)
-    dispatcher = bot_updater.dispatcher
 
     start_handler = CommandHandler('start', start)
     unknown_handler = MessageHandler(Filters.command, unknown)
@@ -200,8 +215,14 @@ def create_bot_updater():
         fallbacks=[sign_out_handler]
     )
 
+    bot_updater = Updater(token=TELEGRAM_API_TOKEN)
+    dispatcher = bot_updater.dispatcher
+
+    bot_updater.user_sig_handler = message_all_conversations_function(bot_updater, app_handler)
+
     dispatcher.add_handler(app_handler)
     dispatcher.add_handler(unknown_handler)
+
     return bot_updater
 
 
