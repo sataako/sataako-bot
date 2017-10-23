@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 SATAAKO_SERVER_URL = os.environ['SATAAKO_SERVER_URL']
 CAT_GIF_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
-SATAAKO_RAIN_MAP_URL = "{}/rainmap".format(SATAAKO_SERVER_URL)
+SATAAKO_RAIN_MAP_URL = "{}/rainmap.gif".format(SATAAKO_SERVER_URL)
 
 
 def get_forecast_json(location):
