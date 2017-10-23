@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 SATAAKO_SERVER_URL = os.environ['SATAAKO_SERVER_URL']
 CAT_GIF_API_URL = "http://thecatapi.com/api/images/get?format=src&type=gif"
-SATAAKO_RAIN_MAP_URL = "{}/rainmap.gif".format(SATAAKO_SERVER_URL)
+SATAAKO_RAIN_MAP_URL = "{}/rainmap".format(SATAAKO_SERVER_URL)
 
 
 def get_forecast_json(location):
@@ -31,9 +31,9 @@ def get_forecast_json(location):
         return []
 
 
-def content_type_is_image(response):
+def content_type_is_gif_image(response):
     """ Returns True if the response object has the content-type of an image and False otherwise. """
-    return 'image' in response.headers['content-type']
+    return 'image/gif' in response.headers['content-type']
 
 
 def rain_map_is_available():
@@ -41,7 +41,7 @@ def rain_map_is_available():
     try:
         logger.info("Querying the Sataako-service for a rain map. ")
         response = requests.get(SATAAKO_RAIN_MAP_URL)
-        return content_type_is_image(response)
+        return content_type_is_gif_image(response)
     except ConnectionError:
         logger.info("Something went wrong the requests for a rain map. ")
         return False
