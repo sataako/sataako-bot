@@ -47,4 +47,4 @@ Set the configuration variables mentioned above to your Heroku app and then push
 
 ## License
 
-~ 
+sataako/sataako-bot is licensed under the MIT License.
