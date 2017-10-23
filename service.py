@@ -21,14 +21,15 @@ def get_forecast_json(location):
         logger.info("Making query to URL %s for rainfall. " % query)
         response = requests.get(query)
         response_code = response.status_code
-        logger.info("Response returned with status code %s. " % response_code)
-        if response_code == requests.codes.ok:
+        logger.info("Forecast response returned with status code %s. " % response_code)
+        is_json = 'json' in response.headers['content-type']
+        if response_code == requests.codes.ok and is_json:
             return response.json()
         else:
-            return []
+            raise RuntimeError('Could not verify that forecast response status was 200 and that content type was JSON.')
     except ConnectionError:
         logger.info("Rainfall query to URL %s failed, returning None. " % query)
-        return []
+        raise
 
 
 def content_type_is_gif_image(response):

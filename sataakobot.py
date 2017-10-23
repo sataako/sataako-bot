@@ -92,20 +92,39 @@ def callback_rain_warning_to_user(bot, job):
     chat_id = job.context['chat_id']
     location = job.context['location']
     warned = job.context.get('warned', False)
-    logger.info("Handling rain warning job for chat with id %s. " % chat_id)
-    forecast = service.get_forecast_json(location)
-    if not forecast:
-        return
-    is_raining, change_eta, accumulation = parse_forecast_json(forecast)
-    if is_raining is False and change_eta is not None and not warned:
-        logger.info("Sending warning to chat with id %s. " % chat_id)
-        job.context['warned'] = True
-        message = "Warning! Expecting rainfall at %s. Estimated rainfall amount %.2fmm. " % (change_eta, accumulation)
-        bot.send_location(chat_id=chat_id, location=location)
-        bot.send_message(chat_id=chat_id, text=message)
-    if is_raining is True:
-        logger.info("Setting warned to false to chat with id %s. " % chat_id)
-        job.context['warned'] = False
+    new_job = job.context.get('new_job', True)
+    server_was_down = job.context.get('server_was_down', False)
+    try:
+        logger.info("Handling rain warning job for chat with id %s. " % chat_id)
+        forecast = service.get_forecast_json(location)
+        is_raining, change_eta, accumulation = parse_forecast_json(forecast)
+        it_is_going_to_rain = (is_raining is False and change_eta is not None)
+        if server_was_down:
+            bot.send_message(chat_id=chat_id, text="The server is back up again! ")
+            job.context['server_was_down'] = False
+        if it_is_going_to_rain and not warned:
+            logger.info("Sending warning to chat with id %s. " % chat_id)
+            job.context['warned'] = True
+            message = "Warning! Expecting rainfall at %s. Estimated rainfall amount %.2fmm. " % (change_eta,
+                                                                                                 accumulation)
+            bot.send_location(chat_id=chat_id, location=location)
+            bot.send_message(chat_id=chat_id, text=message)
+        if it_is_going_to_rain is False and (new_job or server_was_down):
+            bot.send_message(chat_id=chat_id, text="Looks like there is no rain at your location. ")
+        if is_raining is True:
+            logger.info("Setting warned to false to chat with id %s. " % chat_id)
+            job.context['warned'] = False
+    except (ConnectionError, RuntimeError) as err:
+        logger.error("Caught exception in rain warning job: {}".format(err))
+        job.context['server_was_down'] = True
+        if new_job is True:
+            bot.send_message(
+                text="Sorry, we are not currently able to produce a forecast. "
+                "Don't worry though, we will inform you once the service is back up again! ",
+                chat_id=chat_id
+            )
+    finally:
+        job.context['new_job'] = False
 
 
 def schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval):
@@ -184,6 +203,7 @@ def unknown(bot, update):
 def message_all_conversations_function(updater, conversation_handler):
     """ Creates a SIGTERM handler function that messages all conversations. """
     def sigterm_handler(signal, frame):
+        logger.info("Sending message to all conversations about the server going down. ")
         for key in conversation_handler.conversations:
             chat_id, __ = key
             updater.bot.send_message(chat_id=chat_id, text="Sorry, the bot is down for maintenance! ")
