@@ -1,5 +1,6 @@
 """ Functions for making queries to the Sataako-service and getting message content. """
 
+from json import JSONDecodeError
 import requests
 import logging
 import os
@@ -22,12 +23,11 @@ def get_forecast_json(location):
         response = requests.get(query)
         response_code = response.status_code
         logger.info("Forecast response returned with status code %s. " % response_code)
-        is_json = 'json' in response.headers['content-type']
-        if response_code == requests.codes.ok and is_json:
+        if response_code == requests.codes.ok:
             return response.json()
         else:
             raise RuntimeError('Could not verify that forecast response status was 200 and that content type was JSON.')
-    except ConnectionError:
+    except (ConnectionError, JSONDecodeError):
         logger.info("Rainfall query to URL %s failed, returning None. " % query)
         raise
 

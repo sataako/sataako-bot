@@ -1,6 +1,7 @@
 """ Main file for starting the bot from the command line. """
 
 import logging
+from json import JSONDecodeError
 from telegram import ReplyKeyboardMarkup, KeyboardButton, ChatAction
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
 import os
@@ -114,8 +115,8 @@ def callback_rain_warning_to_user(bot, job):
         if is_raining is True:
             logger.info("Setting warned to false to chat with id %s. " % chat_id)
             job.context['warned'] = False
-    except (ConnectionError, RuntimeError) as err:
-        logger.error("Caught exception in rain warning job: {}".format(err))
+    except (ConnectionError, RuntimeError, JSONDecodeError) as err:
+        logger.error("Caught exception of type %s in rain warning job: %s" % (type(err), err))
         job.context['server_was_down'] = True
         if new_job is True:
             bot.send_message(
