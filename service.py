@@ -4,6 +4,7 @@ from json import JSONDecodeError
 import requests
 import logging
 import os
+import time
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -51,7 +52,7 @@ def rain_map_is_available():
 def get_rain_map_gif_url():
     """ Returns a URL to the rain map if it is available and None otherwise. """
     if rain_map_is_available():
-        return SATAAKO_RAIN_MAP_URL
+        return SATAAKO_RAIN_MAP_URL+"/{}".format(time.time())
     else:
         return None
 
