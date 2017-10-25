@@ -74,7 +74,7 @@ def get_rain_map():
     rain_map_url = get_rain_map_gif_url()
     if rain_map_url:
         logger.info("Rain map URL found. ")
-        return rain_map_url, "Here is the current one hour forecast. "
+        return rain_map_url, "Here is the latest one hour forecast. "
     logger.info("No rain map URL returned, attempting to send a cat image instead. ")
     cat_gif_url = get_new_cat_gif_url()
     if cat_gif_url:
