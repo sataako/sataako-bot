@@ -10,6 +10,7 @@ name = "pypi"
 python-telegram-bot = "*"
 requests = "*"
 pytz = "*"
+emoji = "*"
 
 
 [dev-packages]

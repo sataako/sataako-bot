@@ -11,6 +11,7 @@ import enum
 import service
 import pytz
 import datetime
+from emoji import emojize
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -44,7 +45,7 @@ def start(bot, update):
     logger.info("Starting new conversation with chat id %s. " % update.message.chat_id)
     keyboard = [[KeyboardButton("Enable rain alerts", request_location=True)]]
     update.message.reply_text(
-        'Hey there and welcome to the Sataako -service! ',
+        emojize('Hey there and welcome to the Sataako -service! :waving_hand:', use_aliases=True),
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
     return AppStates.ENABLE_ALERTS
@@ -58,12 +59,12 @@ def show_actions_menu(bot, chat_id):
         [KeyboardButton(UPDATE_LOCATION, request_location=True)],
         [KeyboardButton(EXIT_APP)]
     ]
+    message = ("Psst, I will keep sending you updates about rainfall at your current location. " 
+               'If you move to a new location and want to get updates there click "%s" below or click '
+               "[here](https://github.com/sataako) to find out more about me! "
+               ":smiling_face_with_sunglasses:") % UPDATE_LOCATION
     bot.send_message(
-        text="Psst, I will keep sending you updates about rainfall at your current location. " 
-        'If you move to a new location and want to get updates there click "%s" below or click '
-        "[here](https://github.com/sataako) to find out more about me!" % (
-            UPDATE_LOCATION
-        ),
+        text=emojize(message, use_aliases=True),
         parse_mode="Markdown",
         chat_id=chat_id,
         disable_web_page_preview=True,
@@ -115,11 +116,13 @@ def callback_rain_warning_to_user(bot, job):
             job.context['warned'] = True
             message = "Warning! Expecting rainfall at %s. " % change_eta
             message += "Estimated rainfall accumulation during the next hour is %.2fmm. " % accumulation
+            message += ":umbrella_with_rain_drops:"
             if not first_call_to_job:
                 bot.send_location(chat_id=chat_id, location=location)
-            bot.send_message(chat_id=chat_id, text=message)
+            bot.send_message(chat_id=chat_id, text=emojize(message, use_aliases=True))
         if not going_to_rain and first_call_to_job:
-            bot.send_message(chat_id=chat_id, text="No rain is forecasted in your area in the next hour. ")
+            message = "No rain is forecasted in your area in the next hour. :thumbs_up:"
+            bot.send_message(chat_id=chat_id, text=emojize(message, use_aliases=True))
         if is_raining is True:
             logger.info("Setting warned to false to chat with id %s. " % chat_id)
             job.context['warned'] = False
@@ -127,9 +130,11 @@ def callback_rain_warning_to_user(bot, job):
         logger.error("Caught exception of type %s in rain warning job: %s" % (type(err), err))
         job.context['server_was_down'] = True
         if not server_was_down or first_call_to_job:
+            message = "Sorry, currently I'm not able to produce a forecast. "
+            message += "Don't worry though, I will inform you once the service is back up again! "
+            message += ":grinning face with sweat:"
             bot.send_message(
-                text="Sorry, currently I'm not able to produce a forecast. "
-                "Don't worry though, I will inform you once the service is back up again! ",
+                text=emojize(message, use_aliases=True),
                 chat_id=chat_id
             )
     finally:
@@ -232,7 +237,8 @@ def message_all_conversations_function(updater, conversation_handler):
         logger.info("Sending message to all conversations about the server going down. ")
         for key in conversation_handler.conversations:
             chat_id, __ = key
-            updater.bot.send_message(chat_id=chat_id, text="Sorry, the bot is down for maintenance! ")
+            message = "Sorry, the bot is down for maintenance! :hammer_and_wrench:"
+            updater.bot.send_message(chat_id=chat_id, text=emojize(message, use_aliases=True))
             show_start_application_keyboard(updater.bot, chat_id)
     return sigterm_handler
 
