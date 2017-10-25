@@ -58,7 +58,6 @@ def show_actions_menu(bot, chat_id):
         [KeyboardButton(EXIT_APP)]
     ]
     bot.send_message(
-        text="Choose your next action. ",
         chat_id=chat_id,
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
