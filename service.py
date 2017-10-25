@@ -74,11 +74,11 @@ def get_rain_map():
     rain_map_url = get_rain_map_gif_url()
     if rain_map_url:
         logger.info("Rain map URL found. ")
-        return rain_map_url, "Here is the current rain map. "
+        return rain_map_url, "Here is the current one hour forecast. "
     logger.info("No rain map URL returned, attempting to send a cat image instead. ")
     cat_gif_url = get_new_cat_gif_url()
     if cat_gif_url:
         logger.info("Cat gif URL found. ")
-        return cat_gif_url, "Sorry! We couldn't fetch a picture of the rain map but here is a picture of a cat instead."
+        return cat_gif_url, "Sorry! We couldn't fetch the forecast animation but here is a picture of a cat instead."
     logger.info("No cat image URL returned, returning None. ")
-    return None, "Sorry, we couldn't fetch the image of the rain map. "
+    return None, "Sorry, we couldn't fetch the animation. "
