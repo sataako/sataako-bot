@@ -1,3 +1,4 @@
+# coding: utf-8
 """ Main file for starting the bot from the command line. """
 
 import logging
@@ -25,9 +26,9 @@ parser.set_defaults(deploy_local=False)
 TELEGRAM_API_TOKEN = os.environ.get('TELEGRAM_API_TOKEN')
 RAIN_WARNING_QUERY_INTERVAL = int(os.environ.get('RAIN_WARNING_QUERY_INTERVAL', 120))
 
-SHOW_MAP = "Show rain map"
+SHOW_MAP = "Show forecast animation"
 UPDATE_LOCATION = "Update location"
-EXIT_APP = "Exit application"
+EXIT_APP = "Disable rain alerts"
 START_APP = "Start application"
 
 
@@ -41,7 +42,7 @@ class AppStates(enum.IntEnum):
 def start(bot, update):
     """ Starts the conversation with a new user and displays a keyboard that requests the location of the user. """
     logger.info("Starting new conversation with chat id %s. " % update.message.chat_id)
-    keyboard = [[KeyboardButton("Click here to get started", request_location=True)]]
+    keyboard = [[KeyboardButton("Enable rain alerts", request_location=True)]]
     update.message.reply_text(
         'Hey there and welcome to the Sataako -service! ',
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
@@ -105,7 +106,7 @@ def callback_rain_warning_to_user(bot, job):
         if it_is_going_to_rain and not warned:
             logger.info("Sending warning to chat with id %s. " % chat_id)
             job.context['warned'] = True
-            message = "Warning! Expecting rainfall at %s. Estimated rainfall amount %.2fmm. " % (change_eta,
+            message = "Warning! Expecting rainfall at %s. Estimated rainfall accumulation during the next hour is %.2fmm. " % (change_eta,
                                                                                                  accumulation)
             bot.send_location(chat_id=chat_id, location=location)
             bot.send_message(chat_id=chat_id, text=message)
