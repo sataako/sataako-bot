@@ -60,7 +60,7 @@ def show_actions_menu(bot, chat_id):
     ]
     bot.send_message(
         text="Psst, I will keep sending you updates about rainfall at your current location. " 
-        'If you move to a new location and want to get updates there click "%s" below or click '
+        'If you move to a new location and want to get updates there click "%s" below. Click '
         "[here](https://github.com/sataako) to find out more about me!" % (
             UPDATE_LOCATION
         ),
