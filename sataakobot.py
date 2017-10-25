@@ -111,7 +111,8 @@ def callback_rain_warning_to_user(bot, job):
             bot.send_location(chat_id=chat_id, location=location)
             bot.send_message(chat_id=chat_id, text=message)
         if it_is_going_to_rain is False and (new_job or server_was_down):
-            bot.send_message(chat_id=chat_id, text="Looks like there is no rain at your location. ")
+            bot.send_message(chat_id=chat_id, text="No rain is forecasted in your location in the next hour. "
+                             "I will inform you if the situation changes.")
         if is_raining is True:
             logger.info("Setting warned to false to chat with id %s. " % chat_id)
             job.context['warned'] = False
@@ -120,8 +121,8 @@ def callback_rain_warning_to_user(bot, job):
         job.context['server_was_down'] = True
         if new_job is True:
             bot.send_message(
-                text="Sorry, we are not currently able to produce a forecast. "
-                "Don't worry though, we will inform you once the service is back up again! ",
+                text="Sorry, currently I'm not able to produce a forecast. "
+                "Don't worry though, I will inform you once the service is back up again! ",
                 chat_id=chat_id
             )
     finally:
@@ -165,7 +166,7 @@ def show_rain_map(bot, update):
     """ Displays a rainfall map in the chat. """
     chat_id = update.message.chat_id
     logger.info("Getting rain map for chat with id %s. " % update.message.chat.id)
-    update.message.reply_text(text="Hold on tight, we're fetching the rain map. ")
+    update.message.reply_text(text="Hold on tight, I'm fetching the forecast animation. ")
     bot.send_chat_action(chat_id=chat_id, action=ChatAction.UPLOAD_PHOTO)
     image_url, message = service.get_rain_map()
     bot.send_message(chat_id=chat_id, text=message)
