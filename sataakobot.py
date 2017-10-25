@@ -3,7 +3,7 @@
 
 import logging
 from json import JSONDecodeError
-from telegram import ReplyKeyboardMarkup, KeyboardButton, ChatAction
+from telegram import ReplyKeyboardMarkup, KeyboardButton, ChatAction, ReplyKeyboardRemove
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, ConversationHandler, RegexHandler
 import os
 import argparse
@@ -34,7 +34,7 @@ START_APP = "Start application"
 
 class AppStates(enum.IntEnum):
     """ Enums for the different states of the application. """
-    UPDATE_LOCATION = 0
+    ENABLE_ALERTS = 0
     HANDLE_USER_ACTION = 1
     EXIT_APP = 2
 
@@ -47,7 +47,7 @@ def start(bot, update):
         'Hey there and welcome to the Sataako -service! ',
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
-    return AppStates.UPDATE_LOCATION
+    return AppStates.ENABLE_ALERTS
 
 
 def show_actions_menu(bot, chat_id):
@@ -59,7 +59,14 @@ def show_actions_menu(bot, chat_id):
         [KeyboardButton(EXIT_APP)]
     ]
     bot.send_message(
+        text="Psst, I will keep sending you updates about rainfall at your current location. " 
+        'If you move to a new location and want to get updates there click "%s" below or click '
+        "[here](https://github.com/sataako) to find out more about me!" % (
+            UPDATE_LOCATION
+        ),
+        parse_mode="Markdown",
         chat_id=chat_id,
+        disable_web_page_preview=True,
         reply_markup=ReplyKeyboardMarkup(keyboard, resize_keyboard=True)
     )
 
@@ -93,47 +100,52 @@ def callback_rain_warning_to_user(bot, job):
     chat_id = job.context['chat_id']
     location = job.context['location']
     warned = job.context.get('warned', False)
-    new_job = job.context.get('new_job', True)
     server_was_down = job.context.get('server_was_down', False)
+    first_call_to_job = job.context.get('first_call_to_job', True)
     try:
         logger.info("Handling rain warning job for chat with id %s. " % chat_id)
         forecast = service.get_forecast_json(location)
         is_raining, change_eta, accumulation = parse_forecast_json(forecast)
-        it_is_going_to_rain = (is_raining is False and change_eta is not None)
+        going_to_rain = (is_raining is False and change_eta is not None)
         if server_was_down:
             bot.send_message(chat_id=chat_id, text="The server is back up again! ")
             job.context['server_was_down'] = False
-        if it_is_going_to_rain and not warned:
+        if going_to_rain and not warned:
             logger.info("Sending warning to chat with id %s. " % chat_id)
             job.context['warned'] = True
-            message = "Warning! Expecting rainfall at %s. Estimated rainfall accumulation during the next hour is %.2fmm. " % (change_eta,
-                                                                                                 accumulation)
-            bot.send_location(chat_id=chat_id, location=location)
+            message = "Warning! Expecting rainfall at %s. " % change_eta
+            message += "Estimated rainfall accumulation during the next hour is %.2fmm. " % accumulation
+            if not first_call_to_job:
+                bot.send_location(chat_id=chat_id, location=location)
             bot.send_message(chat_id=chat_id, text=message)
-        if it_is_going_to_rain is False and (new_job or server_was_down):
-            bot.send_message(chat_id=chat_id, text="No rain is forecasted in your location in the next hour. "
-                             "I will inform you if the situation changes.")
+        if not going_to_rain and first_call_to_job:
+            bot.send_message(chat_id=chat_id, text="No rain is forecasted in your area in the next hour. ")
         if is_raining is True:
             logger.info("Setting warned to false to chat with id %s. " % chat_id)
             job.context['warned'] = False
     except (ConnectionError, RuntimeError, JSONDecodeError) as err:
         logger.error("Caught exception of type %s in rain warning job: %s" % (type(err), err))
         job.context['server_was_down'] = True
-        if new_job is True:
+        if not server_was_down or first_call_to_job:
             bot.send_message(
                 text="Sorry, currently I'm not able to produce a forecast. "
                 "Don't worry though, I will inform you once the service is back up again! ",
                 chat_id=chat_id
             )
     finally:
-        job.context['new_job'] = False
+        job.context['first_call_to_job'] = False
+
+
+def callback_show_actions_menu_to_user(bot, job):
+    chat_id = job.context['chat_id']
+    show_actions_menu(bot, chat_id)
 
 
 def schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval):
     """ Schedules a repeating rain warning job and adds a reference to the job in the user_data dictionary. """
     logger.info("Scheduling a new rain warning job for chat with id %s." % chat_id)
     context = {'location': location, 'chat_id': chat_id}
-    rain_warning_job = job_queue.run_repeating(callback_rain_warning_to_user, first=0,
+    rain_warning_job = job_queue.run_repeating(callback_rain_warning_to_user, first=1,
                                                interval=interval, context=context)
     user_data['job'] = rain_warning_job
 
@@ -149,16 +161,32 @@ def remove_rain_warning_job(user_data):
         logger.info('No existing job found in user_data. ')
 
 
+def enable_alerts(bot, update, job_queue, user_data):
+    """ Updates the location of the user and displays the actions menu. """
+    location = update.message.location
+    chat_id = update.message.chat_id
+    logger.info("Enabling alerts for chat with id %s. " % chat_id)
+    bot.send_message(text="Hold on while I get a rain update for your current location. ", chat_id=chat_id,
+                     reply_markup=ReplyKeyboardRemove())
+    register_new_location_and_warning(job_queue, user_data, location, chat_id)
+    job_queue.run_once(callback_show_actions_menu_to_user, when=5, context={'chat_id': chat_id})
+    return AppStates.HANDLE_USER_ACTION
+
+
+def register_new_location_and_warning(job_queue, user_data, location, chat_id):
+    logger.info("Updating location for chat with id %s" % chat_id)
+    remove_rain_warning_job(user_data)
+    schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval=RAIN_WARNING_QUERY_INTERVAL)
+
+
 def update_location(bot, update, job_queue, user_data):
     """ Updates the location of the user and adds a repeating job of warning the user of rainfall. """
     global RAIN_WARNING_QUERY_INTERVAL
     logger.info("Updating location for chat with id %s" % update.message.chat.id)
     location = update.message.location
     chat_id = update.message.chat_id
-    remove_rain_warning_job(user_data)
-    schedule_rain_warning_job(job_queue, user_data, location, chat_id, interval=RAIN_WARNING_QUERY_INTERVAL)
+    register_new_location_and_warning(job_queue, user_data, location, chat_id)
     update.message.reply_text(text="Your location has been updated!")
-    show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
 
@@ -172,7 +200,6 @@ def show_rain_map(bot, update):
     bot.send_message(chat_id=chat_id, text=message)
     if image_url:
         bot.send_document(chat_id=chat_id, document=image_url)
-    show_actions_menu(bot, update.message.chat_id)
     return AppStates.HANDLE_USER_ACTION
 
 
@@ -190,9 +217,6 @@ def exit_application(bot, update, user_data):
     logger.info("Chat with id %s exited the application. " % update.message.chat.id)
     remove_rain_warning_job(user_data)
     user_data.clear()
-    update.message.reply_text(
-        'Hope you enjoyed the service, bye! '
-    )
     show_start_application_keyboard(bot, chat_id=update.message.chat_id)
     return ConversationHandler.END
 
@@ -226,8 +250,8 @@ def create_bot_updater():
             RegexHandler(START_APP, start)
         ],
         states={
-            AppStates.UPDATE_LOCATION: [
-                MessageHandler(Filters.location, update_location, pass_job_queue=True, pass_user_data=True)
+            AppStates.ENABLE_ALERTS: [
+                MessageHandler(Filters.location, enable_alerts, pass_job_queue=True, pass_user_data=True)
             ],
             AppStates.HANDLE_USER_ACTION: [
                 RegexHandler(SHOW_MAP, show_rain_map),
