@@ -61,7 +61,7 @@ def show_actions_menu(bot, chat_id):
     ]
     message = ("Psst, I will keep sending you updates about rainfall at your current location. " 
                'If you move to a new location and want to get updates there click "%s" below. Click '
-               "[here](https://github.com/sataako) to find out more about me! "
+               "[here](https://sataako.github.io) to find out more about me! "
                ":smiling_face_with_sunglasses:") % UPDATE_LOCATION
     bot.send_message(
         text=emojize(message, use_aliases=True),
@@ -132,7 +132,7 @@ def callback_rain_warning_to_user(bot, job):
         if not server_was_down or first_call_to_job:
             message = "Sorry, currently I'm not able to produce a forecast. "
             message += "Don't worry though, I will inform you once the service is back up again! "
-            message += ":grinning face with sweat:"
+            message += ":sweat_smile:"
             bot.send_message(
                 text=emojize(message, use_aliases=True),
                 chat_id=chat_id
